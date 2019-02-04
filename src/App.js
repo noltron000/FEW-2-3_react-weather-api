@@ -1,9 +1,11 @@
 
 import React, { Component } from 'react';
+import InputZip from './components/input-zip'
+import Temperature from './components/temperature'
 
 import './App.css';
 
-/**
+/*
  * This example illustrates a simple react project
  * that works with an external API.
  *
@@ -18,15 +20,15 @@ import './App.css';
  * input a zip code. It finds weather data for that
  * zip and displays it in a component.
  *
- * */
+ */
 
 class App extends Component {
 	constructor(props) {
 		super(props)
 
 		this.state = {
-			inputValue: '',		 // Used to hold value entered in the input field
-			weatherData: null,	// Used to hold data loaded from the weather API
+			inputValue: '', // Used to hold value entered in the input field
+			weatherData: null,// Used to hold data loaded from the weather API
 		}
 	}
 
@@ -43,11 +45,12 @@ class App extends Component {
 			// Handle the response stream as JSON
 			return res.json()
 		}).then((json) => {
-			// If the request was successful assign the data to component state
-			this.setState({ weatherData: json })
-			// ! This needs better error checking here or at renderWeather()
-			// It's possible to get a valid JSON response that is not weather
-			// data, for example when a bad zip code entered.
+			if (json.cod === 200) {
+				// If the request was successful assign the data to component state
+				this.setState({ weatherData: json })
+			} else {
+				alert('Error! Invalid Zip Code!')
+			}
 		}).catch((err) => {
 			// If there is no data
 			this.setState({ weatherData: null }) // Clear the weather data we don't have any to display
@@ -64,7 +67,6 @@ class App extends Component {
 			// If there is no data return undefined
 			return undefined
 		}
-
 		/*
 		This next step needs another level of error checking. It's
 		possible to get a JSON response for an invalid zip in which
@@ -74,17 +76,23 @@ class App extends Component {
 		// Take the weather data apart to more easily populate the component
 		const { main, description, icon } = this.state.weatherData.weather[0]
 		const { temp, pressure, humidity, temp_min, temp_max } = this.state.weatherData.main
-
 		return (
-			<div>
-				<div>Title: {main}</div>
-				<div>Desc: {description}</div>
-				<div>Icon: {icon}</div>
-				<div>Temp: {temp}</div>
+			<div className='output'>
+				<div className='flex'>
+					<div className='flex-v'>
+						<img src={'https://openweathermap.org/img/w/' + icon + '.png'} />
+					</div>
+					<h2>
+						{main}<br />
+						<small>{description}</small>
+					</h2>
+				</div>
 				<div>Pressure: {pressure}</div>
-				<div>Humidity: {humidity}</div>
-				<div>Temp Min: {temp_min} Max:{temp_max}</div>
-			</div>
+				<div>Humidity: {humidity}%</div>
+				<Temperature temp={temp} label={"Temperature"} />
+				<Temperature temp={temp_min} label={"Low"} />
+				<Temperature temp={temp_max} label={"High"} />
+			</div >
 		)
 	}
 
@@ -92,30 +100,28 @@ class App extends Component {
 		return (
 			<div className="App">
 
-				{/** This input uses the controlled component pattern */}
-				<form onSubmit={e => this.handleSubmit(e)}>
+				{/* This input uses the controlled component pattern */}
+				<h1>Your Weather NOW!</h1>
+				<form onSubmit={e => this.handleSubmit(e)} className='flex'>
+					{/*
+						This pattern is used for input and other form elements
+						Set the value of the input to a value held in component state
+						Set the value held in component state when a change occurs at the input
+					 */}
 
-					{/**
-					This pattern is used for input and other form elements
-					Set the value of the input to a value held in component state
-					Set the value held in component state when a change occurs at the input
-					*/}
-					<input
-						value={this.state.inputValue}
-						onChange={e => this.setState({ inputValue: e.target.value })}
-						type="text"
-						pattern="(\d{5}([\-]\d{4})?)"
-						placeholder="enter zip"
+					<InputZip
+						inputValue={this.state.inputValue}
+						onChange={(e) => {
+							this.setState({ inputValue: e.target.value })
+						}}
 					/>
-
 					<button type="submit">Submit</button>
-
 				</form>
-
-				{/** Conditionally render this component */}
-				{this.renderWeather()}
-
-			</div>
+				<div className='flex'>
+					{/* Conditionally render this component */}
+					{this.renderWeather()}
+				</div>
+			</div >
 		);
 	}
 }
